@@ -4,6 +4,7 @@ from src.exception import CustomException
 from src.utils import load_object
 import os
 
+
 class PredictPipeline:
     def __init__(self):
         pass
@@ -21,6 +22,8 @@ class PredictPipeline:
         except Exception as e:
             raise CustomException(e,sys)
 
+
+
 class CustomData:
     def __init__(  self,
         gender: str,
@@ -31,7 +34,6 @@ class CustomData:
         reading_score: int,
         writing_score: int):
 
-        
         self.gender = gender
 
         self.race_ethnicity = race_ethnicity
