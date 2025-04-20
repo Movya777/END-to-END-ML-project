@@ -45,6 +45,9 @@ class ModelTrainer:
                 "CatBoosting Regressor": CatBoostRegressor(verbose=False),
                 "AdaBoost Regressor": AdaBoostRegressor(),
             }
-            
+
+            model_report:dict=evaluate_model(X_train=X_train,y_train=y_train,X_test=X_test,
+                                             y_test=y_test,models=models)
+
         except:
             pass
