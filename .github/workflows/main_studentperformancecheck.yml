@@ -1,50 +1,24 @@
-name: Deploy to Amazon EC2
+name: Deploy to EC2 via SSH
 
 on:
   push:
-    branches: [ "main" ]
-
-env:
-  AWS_REGION: 'us-east-1'              # Change to your AWS region
-  EC2_INSTANCE_ID: 'i-0160c8d8aadbd2e96'   # Your EC2 instance ID
-  SSH_KEY_SECRET: 'sample ec2.pem'        # Name of GitHub Secret storing SSH private key
-  REMOTE_USER: 'ubuntu'                # SSH username (e.g., 'ubuntu', 'ec2-user')
-  PROJECT_DIR: '/var/www/my-app'       # Remote directory to deploy to
+    branches:
+      - main  # Adjust based on your main branch name
 
 jobs:
   deploy:
+    name: Deploy Docker Image to EC2
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets[env.SSH_KEY_SECRET] }}
-          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Get EC2 IP address
-        id: ec2-ip
-        run: |
-          INSTANCE_IP=$(aws ec2 describe-instances \
-            --instance-ids ${{ env.EC2_INSTANCE_ID }} \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text)
-          echo "ip=${INSTANCE_IP}" >> $GITHUB_OUTPUT
-
       - name: Deploy via SSH
-        run: |
-          ssh -o StrictHostKeyChecking=no \
-              ${{ env.REMOTE_USER }}@${{ steps.ec2-ip.outputs.ip }} \
-              "mkdir -p ${{ env.PROJECT_DIR }} && \
-               rm -rf ${{ env.PROJECT_DIR }}/*"
-          scp -r -o StrictHostKeyChecking=no \
-              ./* ${{ env.REMOTE_USER }}@${{ steps.ec2-ip.outputs.ip }}:$
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.ECR_IMAGE_URI }}
+            docker stop mltest || true
+            docker rm mltest || true
+            docker run -d -p 8080:8080 --name mltest ${{ secrets.ECR_IMAGE_URI }}
