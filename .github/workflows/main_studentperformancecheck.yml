@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.ECR_IMAGE_URI }}
+            docker pull ${{ secrets.AWS_ECR_LOGIN_URI }}
             docker stop mltest || true
             docker rm mltest || true
-            docker run -d -p 8080:8080 --name mltest ${{ secrets.ECR_IMAGE_URI }}
+            docker run -d -p 8080:8080 --name mltest ${{ secrets.AWS_ECR_LOGIN_URI }}
